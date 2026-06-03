@@ -34,3 +34,4 @@ app/web/.cache/
 .turbo/
 app/web/.turbo/
 *.tsbuildinfo
+app/web/pnpm-lock.yaml
