@@ -1,0 +1,36 @@
+.DS_Store
+
+# Dependencies
+node_modules/
+app/web/node_modules/
+
+# Next.js
+.next/
+app/web/.next/
+out/
+app/web/out/
+
+# Builds
+dist/
+app/web/dist/
+build/
+app/web/build/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Caches
+.cache/
+app/web/.cache/
+.turbo/
+app/web/.turbo/
+*.tsbuildinfo
