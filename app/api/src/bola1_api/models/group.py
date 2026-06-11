@@ -21,7 +21,10 @@ class Group(IdMixin, TimestampMixin, Base):
 
     @property
     def invite_link(self) -> str:
-        return f"/groups/join?code={self.code}"
+        from bola1_api.core.config import settings  # lazy to avoid circular import
+
+        base = settings.frontend_url.rstrip("/")
+        return f"{base}/groups/join?code={self.code}"
 
 
 class GroupMember(Base):
