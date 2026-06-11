@@ -4,13 +4,28 @@ import { apiFetch, isRestApiConfigured } from './client'
 
 export { phaseLabels, statusLabels }
 
+const warnMockFallback = (fn: string) => {
+  if (process.env.NODE_ENV !== 'development') {
+    console.error(
+      `[bola1] ${fn}: NEXT_PUBLIC_API_URL is not set — returning fixture data. ` +
+      'Configure the variable before deploying to production.',
+    )
+  }
+}
+
 export const listMatches = async () => {
-  if (!isRestApiConfigured()) return mockMatches
+  if (!isRestApiConfigured()) {
+    warnMockFallback('listMatches')
+    return mockMatches
+  }
   return apiFetch<Match[]>('/matches')
 }
 
 export const getMatch = async (id: string) => {
-  if (!isRestApiConfigured()) return mockMatches.find((match) => match.id === id)
+  if (!isRestApiConfigured()) {
+    warnMockFallback('getMatch')
+    return mockMatches.find((match) => match.id === id)
+  }
   return apiFetch<Match>(`/matches/${id}`)
 }
 
@@ -26,6 +41,7 @@ export const listLiveMatches = async () => {
 
 export const registerMatchResult = async (matchId: string, homeScore: number, awayScore: number) => {
   if (!isRestApiConfigured()) {
+    warnMockFallback('registerMatchResult')
     const match = mockMatches.find((item) => item.id === matchId)
     return match
       ? { ...match, status: 'finished' as const, homeScore, awayScore }
