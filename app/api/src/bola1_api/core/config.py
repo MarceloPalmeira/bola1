@@ -13,6 +13,16 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 60
     backend_cors_origins: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
 
+    # External football data provider (optional – enables /admin/matches/sync)
+    # Compatible with football-data.org v4; adapt mapping for other providers.
+    football_api_base_url: str = ""
+    football_api_key: str = ""
+    # Minimum seconds between consecutive sync calls (protects free-tier rate limits).
+    football_api_sync_cooldown_seconds: int = 300
+
+    # Public URL of the frontend (used to build absolute invite links)
+    frontend_url: str = "http://localhost:3000"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
