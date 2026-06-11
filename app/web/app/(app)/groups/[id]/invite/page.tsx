@@ -65,6 +65,17 @@ export default function GroupInvitePage({ params }: GroupInvitePageProps) {
     )
   }
 
+  // inviteLink from the backend may already be absolute (FRONTEND_URL set) or
+  // still a relative path from an older deployment – normalise to absolute here.
+  const absoluteInviteLink = (() => {
+    if (typeof window === 'undefined') return group.inviteLink
+    try {
+      return new URL(group.inviteLink, window.location.origin).href
+    } catch {
+      return group.inviteLink
+    }
+  })()
+
   const copyToClipboard = (text: string, type: 'link' | 'code') => {
     navigator.clipboard.writeText(text)
     setCopied(type)
@@ -80,13 +91,13 @@ export default function GroupInvitePage({ params }: GroupInvitePageProps) {
         await navigator.share({
           title: `Entra no bolão ${group.name}!`,
           text: `Vem pro bolão da Copa 2026! Use o código ${group.code} ou clique no link:`,
-          url: group.inviteLink,
+          url: absoluteInviteLink,
         })
       } catch {
         // User cancelled share
       }
     } else {
-      copyToClipboard(group.inviteLink, 'link')
+      copyToClipboard(absoluteInviteLink, 'link')
     }
   }
 
@@ -144,14 +155,14 @@ export default function GroupInvitePage({ params }: GroupInvitePageProps) {
         <p className="text-sm text-muted-foreground mb-2">Link de convite</p>
         <div className="flex items-center gap-2">
           <Input
-            value={group.inviteLink}
+            value={absoluteInviteLink}
             readOnly
             className="text-sm"
           />
           <Button
             variant="outline"
             size="icon"
-            onClick={() => copyToClipboard(group.inviteLink, 'link')}
+            onClick={() => copyToClipboard(absoluteInviteLink, 'link')}
             className="shrink-0"
             aria-label="Copiar link de convite"
           >
