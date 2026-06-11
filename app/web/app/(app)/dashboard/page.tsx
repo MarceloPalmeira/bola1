@@ -35,22 +35,26 @@ export default function DashboardPage() {
     let cancelled = false
 
     async function loadDashboard() {
-      const [nextMatches, nextPredictions] = await Promise.all([
-        listMatches(),
-        currentUser ? listPredictionsForUser(currentUser.id) : Promise.resolve([]),
-      ])
-      const [nextActivities, nextRanking] = currentGroup
-        ? await Promise.all([
-            getActivitiesForGroup(currentGroup.id),
-            getRanking(currentGroup.id),
-          ])
-        : [[], []]
+      try {
+        const [nextMatches, nextPredictions] = await Promise.all([
+          listMatches(),
+          currentUser ? listPredictionsForUser(currentUser.id) : Promise.resolve([]),
+        ])
+        const [nextActivities, nextRanking] = currentGroup
+          ? await Promise.all([
+              getActivitiesForGroup(currentGroup.id),
+              getRanking(currentGroup.id),
+            ])
+          : [[], []]
 
-      if (cancelled) return
-      setMatches(nextMatches)
-      setUserPredictions(nextPredictions)
-      setActivities(nextActivities.slice(0, 5))
-      setRanking(nextRanking)
+        if (cancelled) return
+        setMatches(nextMatches)
+        setUserPredictions(nextPredictions)
+        setActivities(nextActivities.slice(0, 5))
+        setRanking(nextRanking)
+      } catch {
+        // Dashboard loads best-effort; API errors logged by the client
+      }
     }
 
     loadDashboard()
