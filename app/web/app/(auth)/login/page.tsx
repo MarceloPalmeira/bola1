@@ -32,7 +32,9 @@ export default function LoginPage() {
       toast.success('Login realizado!', {
         description: 'Bem-vindo de volta ao bolão!',
       })
-      router.push('/dashboard')
+      const params = new URLSearchParams(window.location.search)
+      const next = params.get('next')
+      router.push(next ? decodeURIComponent(next) : '/dashboard')
     } catch (error) {
       toast.error('Não foi possível entrar', {
         description: error instanceof ApiError ? error.message : 'Confira seu e-mail e senha',
