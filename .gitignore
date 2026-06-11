@@ -3,6 +3,8 @@
 # Dependencies
 node_modules/
 app/web/node_modules/
+.venv/
+app/api/.venv/
 
 # Next.js
 .next/
@@ -34,4 +36,10 @@ app/web/.cache/
 .turbo/
 app/web/.turbo/
 *.tsbuildinfo
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
 app/web/pnpm-lock.yaml

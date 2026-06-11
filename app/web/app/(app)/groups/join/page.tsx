@@ -8,9 +8,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, UserPlus, Link as LinkIcon } from 'lucide-react'
 import { toast } from 'sonner'
+import { ApiError } from '@/lib/api/client'
+import { joinGroup } from '@/lib/api/groups'
+import { useApp } from '@/lib/context'
 
 export default function JoinGroupPage() {
   const router = useRouter()
+  const { refreshGroups, setCurrentGroup } = useApp()
   const [code, setCode] = useState('')
   const [isJoining, setIsJoining] = useState(false)
 
@@ -25,20 +29,28 @@ export default function JoinGroupPage() {
     return () => window.clearTimeout(timeoutId)
   }, [])
 
-  const handleJoin = (event?: React.FormEvent) => {
+  const handleJoin = async (event?: React.FormEvent) => {
     event?.preventDefault()
     if (!code.trim()) {
       toast.error('Digite o código do grupo')
       return
     }
     setIsJoining(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const group = await joinGroup(code.trim())
+      if (group) setCurrentGroup(group)
+      await refreshGroups()
       toast.success('Você entrou no grupo!', {
         description: 'Bem-vindo ao bolão!',
       })
       router.push('/groups')
-    }, 500)
+    } catch (error) {
+      toast.error('Não foi possível entrar no grupo', {
+        description: error instanceof ApiError ? error.message : 'Confira o código e tente novamente',
+      })
+    } finally {
+      setIsJoining(false)
+    }
   }
 
   return (

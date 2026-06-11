@@ -1,8 +1,10 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { ActivityFeed } from '@/components/activity/activity-feed'
 import { useApp } from '@/lib/context'
 import { getActivitiesForGroup } from '@/lib/api/activities'
+import { Activity as ActivityType } from '@/lib/types'
 import { Activity, ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useRouter } from 'next/navigation'
@@ -10,7 +12,22 @@ import { useRouter } from 'next/navigation'
 export default function ActivityPage() {
   const router = useRouter()
   const { currentGroup } = useApp()
-  const activities = currentGroup ? getActivitiesForGroup(currentGroup.id) : []
+  const [activities, setActivities] = useState<ActivityType[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadActivities() {
+      const nextActivities = currentGroup ? await getActivitiesForGroup(currentGroup.id) : []
+      if (!cancelled) setActivities(nextActivities)
+    }
+
+    loadActivities()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentGroup])
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">

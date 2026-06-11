@@ -1,14 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { MatchCard } from '@/components/matches/match-card'
 import { listMatches } from '@/lib/api/matches'
-import { getUserPrediction } from '@/lib/api/predictions'
+import { listPredictionsForUser } from '@/lib/api/predictions'
 import { useApp } from '@/lib/context'
+import { Match, Prediction } from '@/lib/types'
 import { Calendar } from 'lucide-react'
 
 const phases = [
@@ -31,7 +32,28 @@ export default function MatchesPage() {
   const { currentUser, currentGroup } = useApp()
   const [selectedPhase, setSelectedPhase] = useState('all')
   const [selectedStatus, setSelectedStatus] = useState('all')
-  const matches = listMatches()
+  const [matches, setMatches] = useState<Match[]>([])
+  const [userPredictions, setUserPredictions] = useState<Prediction[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadMatches() {
+      const [nextMatches, nextPredictions] = await Promise.all([
+        listMatches(),
+        currentUser ? listPredictionsForUser(currentUser.id) : Promise.resolve([]),
+      ])
+      if (cancelled) return
+      setMatches(nextMatches)
+      setUserPredictions(nextPredictions)
+    }
+
+    loadMatches()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentUser])
 
   const filteredMatches = matches.filter((match) => {
     const phaseMatch = selectedPhase === 'all' || match.phase === selectedPhase
@@ -125,7 +147,7 @@ export default function MatchesPage() {
         <div className="space-y-3">
           {filteredMatches.map((match) => {
             const prediction = currentUser && currentGroup
-              ? getUserPrediction(match.id, currentUser.id, currentGroup.id)
+              ? userPredictions.find((item) => item.matchId === match.id && item.groupId === currentGroup.id)
               : undefined
             return (
               <MatchCard

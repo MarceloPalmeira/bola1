@@ -11,7 +11,7 @@ import { Lock, Play, CheckCircle2, Clock } from 'lucide-react'
 
 interface MatchCardProps {
   match: Match
-  userPrediction?: { homeScore: number; awayScore: number; points?: number }
+  userPrediction?: { homeScore: number; awayScore: number; points?: number | null }
   compact?: boolean
   showPhase?: boolean
 }
@@ -103,7 +103,7 @@ export function MatchCard({ match, userPrediction, compact = false, showPhase = 
                 </span>
               </div>
             )}
-            {userPrediction?.points !== undefined && (
+            {userPrediction?.points != null && (
               <Badge className="mt-1 bg-primary text-primary-foreground text-[10px]">
                 +{userPrediction.points} pts
               </Badge>

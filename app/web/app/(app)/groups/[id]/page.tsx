@@ -1,6 +1,6 @@
 'use client'
 
-import { use } from 'react'
+import { use, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
@@ -14,6 +14,7 @@ import { useApp } from '@/lib/context'
 import { getActivitiesForGroup } from '@/lib/api/activities'
 import { getGroup } from '@/lib/api/groups'
 import { getRanking } from '@/lib/api/rankings'
+import { Activity as ActivityType, Group, RankingEntry } from '@/lib/types'
 import { 
   ArrowLeft, 
   Users, 
@@ -32,11 +33,38 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
   const router = useRouter()
   const { currentUser } = useApp()
 
-  const group = getGroup(id)
-  const ranking = group ? getRanking(id) : []
-  const activities = group ? getActivitiesForGroup(id) : []
+  const [group, setGroup] = useState<Group | undefined>()
+  const [ranking, setRanking] = useState<RankingEntry[]>([])
+  const [activities, setActivities] = useState<ActivityType[]>([])
+  const [isLoading, setIsLoading] = useState(true)
 
-  if (!group) {
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadGroup() {
+      setIsLoading(true)
+      try {
+        const nextGroup = await getGroup(id)
+        const [nextRanking, nextActivities] = nextGroup
+          ? await Promise.all([getRanking(id), getActivitiesForGroup(id)])
+          : [[], []]
+        if (cancelled) return
+        setGroup(nextGroup)
+        setRanking(nextRanking)
+        setActivities(nextActivities)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    loadGroup()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  if (!group && !isLoading) {
     return (
       <div className="px-4 py-6 max-w-2xl mx-auto">
         <Card className="p-8 text-center">
@@ -45,6 +73,16 @@ export default function GroupDetailPage({ params }: GroupDetailPageProps) {
           <Button variant="outline" className="mt-4" onClick={() => router.back()}>
             Voltar
           </Button>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!group) {
+    return (
+      <div className="px-4 py-6 max-w-2xl mx-auto">
+        <Card className="p-8 text-center">
+          <p className="font-medium">Carregando grupo...</p>
         </Card>
       </div>
     )

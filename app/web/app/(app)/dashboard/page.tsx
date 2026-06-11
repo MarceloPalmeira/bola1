@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { useApp } from '@/lib/context'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,9 +10,10 @@ import { MatchCard } from '@/components/matches/match-card'
 import { ActivityFeed } from '@/components/activity/activity-feed'
 import { GroupSwitcher } from '@/components/groups/group-switcher'
 import { getActivitiesForGroup } from '@/lib/api/activities'
-import { listLiveMatches, listUpcomingMatches } from '@/lib/api/matches'
-import { getUserPrediction } from '@/lib/api/predictions'
+import { listMatches } from '@/lib/api/matches'
+import { listPredictionsForUser } from '@/lib/api/predictions'
 import { getRanking } from '@/lib/api/rankings'
+import { Activity, Match, Prediction, RankingEntry } from '@/lib/types'
 import { 
   Trophy, 
   Users, 
@@ -24,13 +26,46 @@ import {
 
 export default function DashboardPage() {
   const { currentUser, currentGroup, theme, toggleTheme } = useApp()
-  
-  const upcomingMatches = listUpcomingMatches().slice(0, 3)
-  const liveMatches = listLiveMatches()
-  const activities = currentGroup ? getActivitiesForGroup(currentGroup.id).slice(0, 5) : []
-  const ranking = currentGroup ? getRanking(currentGroup.id) : []
+  const [matches, setMatches] = useState<Match[]>([])
+  const [activities, setActivities] = useState<Activity[]>([])
+  const [ranking, setRanking] = useState<RankingEntry[]>([])
+  const [userPredictions, setUserPredictions] = useState<Prediction[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadDashboard() {
+      const [nextMatches, nextPredictions] = await Promise.all([
+        listMatches(),
+        currentUser ? listPredictionsForUser(currentUser.id) : Promise.resolve([]),
+      ])
+      const [nextActivities, nextRanking] = currentGroup
+        ? await Promise.all([
+            getActivitiesForGroup(currentGroup.id),
+            getRanking(currentGroup.id),
+          ])
+        : [[], []]
+
+      if (cancelled) return
+      setMatches(nextMatches)
+      setUserPredictions(nextPredictions)
+      setActivities(nextActivities.slice(0, 5))
+      setRanking(nextRanking)
+    }
+
+    loadDashboard()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentGroup, currentUser])
+
+  const upcomingMatches = matches.filter((match) => match.status === 'upcoming').slice(0, 3)
+  const liveMatches = matches.filter((match) => match.status === 'live')
   const currentUserRanking = ranking.find(r => r.user.id === currentUser?.id)
   const currentMember = currentGroup?.members.find(m => m.userId === currentUser?.id)
+  const predictionFor = (matchId: string) =>
+    userPredictions.find((prediction) => prediction.matchId === matchId && prediction.groupId === currentGroup?.id)
 
   return (
     <div className="px-4 py-6 max-w-7xl mx-auto">
@@ -100,10 +135,10 @@ export default function DashboardPage() {
                     match={match}
                     userPrediction={
                       currentUser && currentGroup
-                        ? getUserPrediction(match.id, currentUser.id, currentGroup.id)
+                        ? predictionFor(match.id)
                           ? {
-                              homeScore: getUserPrediction(match.id, currentUser.id, currentGroup.id)!.homeScore,
-                              awayScore: getUserPrediction(match.id, currentUser.id, currentGroup.id)!.awayScore,
+                              homeScore: predictionFor(match.id)!.homeScore,
+                              awayScore: predictionFor(match.id)!.awayScore,
                             }
                           : undefined
                         : undefined
@@ -127,7 +162,7 @@ export default function DashboardPage() {
             <div className="space-y-3">
               {upcomingMatches.map((match) => {
                 const prediction = currentUser && currentGroup
-                  ? getUserPrediction(match.id, currentUser.id, currentGroup.id)
+                  ? predictionFor(match.id)
                   : undefined
                 return (
                   <MatchCard 

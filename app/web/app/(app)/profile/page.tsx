@@ -1,13 +1,14 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { useApp } from '@/lib/context'
-import { listUserGroups } from '@/lib/api/groups'
 import { listPredictionsForUser } from '@/lib/api/predictions'
+import { Prediction } from '@/lib/types'
 import { 
   User, 
   Trophy, 
@@ -23,7 +24,23 @@ import {
 } from 'lucide-react'
 
 export default function ProfilePage() {
-  const { currentUser, theme, toggleTheme } = useApp()
+  const { currentUser, theme, toggleTheme, groups: userGroups, logout } = useApp()
+  const [userPredictions, setUserPredictions] = useState<Prediction[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadPredictions() {
+      const nextPredictions = currentUser ? await listPredictionsForUser(currentUser.id) : []
+      if (!cancelled) setUserPredictions(nextPredictions)
+    }
+
+    loadPredictions()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentUser])
 
   if (!currentUser) {
     return (
@@ -39,8 +56,6 @@ export default function ProfilePage() {
     )
   }
 
-  const userGroups = listUserGroups(currentUser.id)
-
   // Calculate total stats across all groups
   const totalStats = userGroups.reduce((acc, group) => {
     const member = group.members.find(m => m.userId === currentUser.id)
@@ -52,8 +67,6 @@ export default function ProfilePage() {
     }
     return acc
   }, { totalPoints: 0, exactScores: 0, correctWinners: 0, misses: 0 })
-
-  const userPredictions = listPredictionsForUser(currentUser.id)
 
   return (
     <div className="px-4 py-6 max-w-md mx-auto">
@@ -152,7 +165,7 @@ export default function ProfilePage() {
                     <span>Palpite: </span>
                     <span className="font-bold">{prediction.homeScore} - {prediction.awayScore}</span>
                   </div>
-                  {prediction.points !== undefined && (
+                  {prediction.points != null && (
                     <Badge 
                       variant={prediction.points === 3 ? 'default' : prediction.points === 1 ? 'secondary' : 'outline'}
                       className={prediction.points === 3 ? 'bg-success' : prediction.points === 0 ? 'text-destructive' : ''}
@@ -190,7 +203,10 @@ export default function ProfilePage() {
         </button>
         <Separator />
         <Link href="/login">
-          <button className="w-full flex items-center justify-between p-4 hover:bg-muted transition-colors text-destructive">
+          <button
+            className="w-full flex items-center justify-between p-4 hover:bg-muted transition-colors text-destructive"
+            onClick={logout}
+          >
             <div className="flex items-center gap-3">
               <LogOut className="h-5 w-5" />
               <span className="font-medium">Sair</span>

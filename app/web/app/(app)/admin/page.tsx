@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,8 +16,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { listGroups } from '@/lib/api/groups'
-import { listMatches, phaseLabels } from '@/lib/api/matches'
+import { listMatches, phaseLabels, registerMatchResult } from '@/lib/api/matches'
 import { listUsers } from '@/lib/api/users'
+import { ApiError } from '@/lib/api/client'
+import { Group, Match, User } from '@/lib/types'
 import { 
   ArrowLeft,
   Shield,
@@ -41,9 +43,32 @@ export default function AdminPage() {
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null)
   const [homeScore, setHomeScore] = useState('')
   const [awayScore, setAwayScore] = useState('')
-  const matches = listMatches()
-  const groups = listGroups()
-  const users = listUsers()
+  const [matches, setMatches] = useState<Match[]>([])
+  const [groups, setGroups] = useState<Group[]>([])
+  const [users, setUsers] = useState<User[]>([])
+  const [isRegisteringResult, setIsRegisteringResult] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadAdminData() {
+      const [nextMatches, nextGroups, nextUsers] = await Promise.all([
+        listMatches(),
+        listGroups(),
+        listUsers(),
+      ])
+      if (cancelled) return
+      setMatches(nextMatches)
+      setGroups(nextGroups)
+      setUsers(nextUsers)
+    }
+
+    loadAdminData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const handleSyncMatches = () => {
     toast.success('Sincronização iniciada', {
@@ -57,17 +82,30 @@ export default function AdminPage() {
     })
   }
 
-  const handleRegisterResult = () => {
+  const handleRegisterResult = async () => {
     if (!selectedMatch || homeScore === '' || awayScore === '') {
       toast.error('Preencha todos os campos')
       return
     }
-    toast.success('Resultado registrado!', {
-      description: `Placar: ${homeScore} x ${awayScore}`,
-    })
-    setSelectedMatch(null)
-    setHomeScore('')
-    setAwayScore('')
+    setIsRegisteringResult(true)
+    try {
+      const updatedMatch = await registerMatchResult(selectedMatch, Number(homeScore), Number(awayScore))
+      if (updatedMatch) {
+        setMatches((items) => items.map((match) => match.id === updatedMatch.id ? updatedMatch : match))
+      }
+      toast.success('Resultado registrado!', {
+        description: `Placar: ${homeScore} x ${awayScore}`,
+      })
+      setSelectedMatch(null)
+      setHomeScore('')
+      setAwayScore('')
+    } catch (error) {
+      toast.error('Não foi possível registrar o resultado', {
+        description: error instanceof ApiError ? error.message : 'Confira suas permissões e tente novamente',
+      })
+    } finally {
+      setIsRegisteringResult(false)
+    }
   }
 
   return (
@@ -194,9 +232,9 @@ export default function AdminPage() {
               <Button 
                 className="w-full" 
                 onClick={handleRegisterResult}
-                disabled={!selectedMatch || homeScore === '' || awayScore === ''}
+                disabled={!selectedMatch || homeScore === '' || awayScore === '' || isRegisteringResult}
               >
-                Registrar resultado
+                {isRegisteringResult ? 'Registrando...' : 'Registrar resultado'}
               </Button>
             </div>
           </Card>

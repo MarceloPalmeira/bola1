@@ -5,13 +5,10 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useApp } from '@/lib/context'
-import { listUserGroups } from '@/lib/api/groups'
 import { Users, Plus, ChevronRight, Crown, UserPlus } from 'lucide-react'
 
 export default function GroupsPage() {
-  const { currentUser, currentGroup, setCurrentGroup } = useApp()
-
-  const userGroups = listUserGroups(currentUser?.id)
+  const { currentUser, currentGroup, setCurrentGroup, groups: userGroups } = useApp()
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">

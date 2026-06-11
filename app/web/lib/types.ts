@@ -5,6 +5,14 @@ export interface User {
   email: string
   nickname: string
   avatar: string
+  isSuperuser?: boolean
+  createdAt: string
+}
+
+export interface UserPublic {
+  id: string
+  nickname: string
+  avatar: string
   createdAt: string
 }
 
@@ -20,7 +28,7 @@ export interface Group {
 
 export interface GroupMember {
   userId: string
-  user: User
+  user: UserPublic
   role: 'admin' | 'member'
   joinedAt: string
   totalPoints: number
@@ -33,33 +41,34 @@ export interface Team {
   id: string
   name: string
   code: string
-  flag: string
+  flag: string | null
 }
 
 export interface Match {
   id: string
   homeTeam: Team
   awayTeam: Team
+  kickoffAt?: string
   date: string
   time: string
   venue: string
   phase: 'group-stage' | 'round-of-16' | 'quarter-finals' | 'semi-finals' | 'final'
-  group?: string
+  group?: string | null
   status: 'upcoming' | 'live' | 'finished' | 'locked'
-  homeScore?: number
-  awayScore?: number
+  homeScore?: number | null
+  awayScore?: number | null
 }
 
 export interface Prediction {
   id: string
   matchId: string
   userId: string
-  user: User
+  user: UserPublic
   groupId: string
   homeScore: number
   awayScore: number
-  points?: number
-  resultType?: 'exact' | 'winner' | 'miss'
+  points?: number | null
+  resultType?: 'exact' | 'winner' | 'miss' | null
   createdAt: string
   updatedAt: string
 }
@@ -67,18 +76,18 @@ export interface Prediction {
 export interface Activity {
   id: string
   type: 'prediction' | 'join' | 'result'
-  userId: string
-  user: User
+  userId?: string | null
+  user: UserPublic | null
   groupId: string
-  matchId?: string
-  match?: Match
-  prediction?: Prediction
+  matchId?: string | null
+  match?: Match | null
+  prediction?: Prediction | null
   createdAt: string
 }
 
 export interface RankingEntry {
   position: number
-  user: User
+  user: UserPublic
   totalPoints: number
   exactScores: number
   correctWinners: number

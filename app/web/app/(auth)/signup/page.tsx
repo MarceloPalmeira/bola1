@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Eye, EyeOff, Trophy, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import { ApiError } from '@/lib/api/client'
+import { login, register } from '@/lib/api/auth'
 
 export default function SignupPage() {
   const router = useRouter()
@@ -20,7 +22,7 @@ export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !nickname || !password || !confirmPassword) {
       toast.error('Preencha todos os campos')
@@ -35,13 +37,20 @@ export default function SignupPage() {
       return
     }
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await register({ email, password, nickname })
+      await login(email, password)
       toast.success('Conta criada!', {
         description: 'Bem-vindo ao bolão!',
       })
       router.push('/dashboard')
-    }, 500)
+    } catch (error) {
+      toast.error('Não foi possível criar a conta', {
+        description: error instanceof ApiError ? error.message : 'Tente novamente em instantes',
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const nicknameSuggestions = ['CraqueDaBola', 'PalpiteiroMor', 'GoleiroDeMesa', 'TaticoSagaz']

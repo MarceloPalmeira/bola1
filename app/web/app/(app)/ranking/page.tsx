@@ -1,15 +1,32 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { Card } from '@/components/ui/card'
 import { RankingList } from '@/components/ranking/ranking-list'
 import { useApp } from '@/lib/context'
 import { getRanking } from '@/lib/api/rankings'
+import { RankingEntry } from '@/lib/types'
 import { Trophy, Info } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export default function RankingPage() {
   const { currentUser, currentGroup } = useApp()
-  const ranking = currentGroup ? getRanking(currentGroup.id) : []
+  const [ranking, setRanking] = useState<RankingEntry[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function loadRanking() {
+      const nextRanking = currentGroup ? await getRanking(currentGroup.id) : []
+      if (!cancelled) setRanking(nextRanking)
+    }
+
+    loadRanking()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentGroup])
 
   return (
     <div className="px-4 py-6 max-w-2xl mx-auto">

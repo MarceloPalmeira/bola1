@@ -1,11 +1,12 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { getGroup } from '@/lib/api/groups'
+import { Group } from '@/lib/types'
 import { ArrowLeft, Copy, Share2, Check } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -17,10 +18,30 @@ export default function GroupInvitePage({ params }: GroupInvitePageProps) {
   const { id } = use(params)
   const router = useRouter()
   const [copied, setCopied] = useState<'link' | 'code' | null>(null)
+  const [group, setGroup] = useState<Group | undefined>()
+  const [isLoading, setIsLoading] = useState(true)
 
-  const group = getGroup(id)
+  useEffect(() => {
+    let cancelled = false
 
-  if (!group) {
+    async function loadGroup() {
+      setIsLoading(true)
+      try {
+        const nextGroup = await getGroup(id)
+        if (!cancelled) setGroup(nextGroup)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    loadGroup()
+
+    return () => {
+      cancelled = true
+    }
+  }, [id])
+
+  if (!group && !isLoading) {
     return (
       <div className="px-4 py-6 max-w-md mx-auto">
         <Card className="p-8 text-center">
@@ -29,6 +50,16 @@ export default function GroupInvitePage({ params }: GroupInvitePageProps) {
           <Button variant="outline" className="mt-4" onClick={() => router.back()}>
             Voltar
           </Button>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!group) {
+    return (
+      <div className="px-4 py-6 max-w-md mx-auto">
+        <Card className="p-8 text-center">
+          <p className="font-medium">Carregando convite...</p>
         </Card>
       </div>
     )

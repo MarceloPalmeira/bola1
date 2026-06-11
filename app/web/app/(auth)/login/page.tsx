@@ -10,6 +10,8 @@ import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Eye, EyeOff, Trophy } from 'lucide-react'
 import { toast } from 'sonner'
+import { ApiError } from '@/lib/api/client'
+import { login } from '@/lib/api/auth'
 
 export default function LoginPage() {
   const router = useRouter()
@@ -18,20 +20,26 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!email || !password) {
       toast.error('Preencha todos os campos')
       return
     }
     setIsLoading(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      await login(email, password)
       toast.success('Login realizado!', {
         description: 'Bem-vindo de volta ao bolão!',
       })
       router.push('/dashboard')
-    }, 500)
+    } catch (error) {
+      toast.error('Não foi possível entrar', {
+        description: error instanceof ApiError ? error.message : 'Confira seu e-mail e senha',
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (

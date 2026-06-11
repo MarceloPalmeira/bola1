@@ -36,6 +36,12 @@ export function ActivityFeed({ activities }: ActivityFeedProps) {
 }
 
 function ActivityItem({ activity }: { activity: Activity }) {
+  const user = activity.user ?? {
+    id: 'unknown',
+    nickname: 'Usuário',
+    avatar: '',
+    createdAt: activity.createdAt,
+  }
   const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
     addSuffix: true,
     locale: ptBR,
@@ -49,12 +55,12 @@ function ActivityItem({ activity }: { activity: Activity }) {
         </div>
         <div className="flex-1 min-w-0">
           <p className="text-sm">
-            <span className="font-medium">{activity.user.nickname}</span>
+            <span className="font-medium">{user.nickname}</span>
             {' entrou no grupo'}
           </p>
           <p className="text-xs text-muted-foreground">{timeAgo}</p>
         </div>
-        <span className="text-2xl">{activity.user.avatar}</span>
+        <span className="text-2xl">{user.avatar}</span>
       </Card>
     )
   }
@@ -92,12 +98,12 @@ function ActivityItem({ activity }: { activity: Activity }) {
         <div className="flex items-start gap-3">
           <Avatar className="h-10 w-10 shrink-0">
             <AvatarFallback className="text-lg bg-muted">
-              {activity.user.avatar}
+              {user.avatar}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="font-medium text-sm">{activity.user.nickname}</span>
+              <span className="font-medium text-sm">{user.nickname}</span>
               <span className="text-xs text-muted-foreground">{timeAgo}</span>
             </div>
             <div className="mt-2 p-2 rounded-lg bg-muted/50">
@@ -123,7 +129,7 @@ function ActivityItem({ activity }: { activity: Activity }) {
                   <config.icon className="h-3 w-3 mr-1" />
                   {config.label}
                 </Badge>
-                {activity.prediction.points !== undefined && (
+                {activity.prediction.points != null && (
                   <Badge variant="outline" className="text-xs">
                     +{activity.prediction.points} pts
                   </Badge>

@@ -1,6 +1,6 @@
 'use client'
 
-import { use, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -9,7 +9,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { ScoreSelector } from '@/components/matches/score-selector'
 import { useApp } from '@/lib/context'
 import { getMatch, phaseLabels, statusLabels } from '@/lib/api/matches'
-import { listPredictionsForMatch, getUserPrediction } from '@/lib/api/predictions'
+import { listPredictionsForMatch, getUserPrediction, savePrediction } from '@/lib/api/predictions'
+import { Match, Prediction } from '@/lib/types'
 import { 
   ArrowLeft, 
   Calendar, 
@@ -35,14 +36,41 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
   const router = useRouter()
   const { currentUser, currentGroup } = useApp()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [match, setMatch] = useState<Match | undefined>()
+  const [predictions, setPredictions] = useState<Prediction[]>([])
+  const [userPrediction, setUserPrediction] = useState<Prediction | undefined>()
+  const [isLoading, setIsLoading] = useState(true)
 
-  const match = getMatch(id)
-  const predictions = currentGroup ? listPredictionsForMatch(id, currentGroup.id) : []
-  const userPrediction = currentUser && currentGroup 
-    ? getUserPrediction(id, currentUser.id, currentGroup.id)
-    : undefined
+  useEffect(() => {
+    let cancelled = false
 
-  if (!match) {
+    async function loadMatch() {
+      setIsLoading(true)
+      try {
+        const [nextMatch, nextPredictions, nextUserPrediction] = await Promise.all([
+          getMatch(id),
+          currentGroup ? listPredictionsForMatch(id, currentGroup.id) : Promise.resolve([]),
+          currentUser && currentGroup
+            ? getUserPrediction(id, currentUser.id, currentGroup.id)
+            : Promise.resolve(undefined),
+        ])
+        if (cancelled) return
+        setMatch(nextMatch)
+        setPredictions(nextPredictions)
+        setUserPrediction(nextUserPrediction)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    loadMatch()
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentGroup, currentUser, id])
+
+  if (!match && !isLoading) {
     return (
       <div className="px-4 py-6 max-w-2xl mx-auto">
         <Card className="p-8 text-center">
@@ -56,21 +84,42 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
     )
   }
 
+  if (!match) {
+    return (
+      <div className="px-4 py-6 max-w-2xl mx-auto">
+        <Card className="p-8 text-center">
+          <p className="font-medium">Carregando jogo...</p>
+        </Card>
+      </div>
+    )
+  }
+
   const isLocked = match.status === 'locked' || match.status === 'live' || match.status === 'finished'
   const formattedDate = format(new Date(match.date), "EEEE, dd 'de' MMMM", { locale: ptBR })
 
-  const handleSubmitPrediction = (homeScore: number, awayScore: number) => {
+  const handleSubmitPrediction = async (homeScore: number, awayScore: number) => {
+    if (!currentGroup) return
     setIsSubmitting(true)
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      const savedPrediction = await savePrediction(match.id, currentGroup.id, homeScore, awayScore)
+      if (savedPrediction) {
+        setUserPrediction(savedPrediction)
+        setPredictions((items) => [
+          savedPrediction,
+          ...items.filter((prediction) => prediction.id !== savedPrediction.id),
+        ])
+      }
       toast.success('Palpite registrado!', {
         description: `${match.homeTeam.name} ${homeScore} x ${awayScore} ${match.awayTeam.name}`,
       })
-    }, 500)
+    } catch {
+      toast.error('Não foi possível registrar o palpite')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const getResultBadge = (resultType?: 'exact' | 'winner' | 'miss') => {
+  const getResultBadge = (resultType?: 'exact' | 'winner' | 'miss' | null) => {
     if (!resultType) return null
     const config = {
       exact: { label: 'Acertou na mosca!', icon: Target, color: 'bg-success text-success-foreground' },
@@ -177,7 +226,7 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
             </div>
             <div className="text-right">
               {getResultBadge(userPrediction.resultType)}
-              {userPrediction.points !== undefined && (
+              {userPrediction.points != null && (
                 <p className="text-2xl font-bold text-primary mt-1">
                   +{userPrediction.points} pts
                 </p>
@@ -261,7 +310,7 @@ export default function MatchDetailPage({ params }: MatchDetailPageProps) {
                   <p className="text-lg font-bold">
                     {prediction.homeScore} - {prediction.awayScore}
                   </p>
-                  {prediction.points !== undefined && (
+                  {prediction.points != null && (
                     <p className="text-xs text-primary font-medium">
                       +{prediction.points} pts
                     </p>

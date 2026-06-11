@@ -8,26 +8,38 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { ArrowLeft, Users, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
+import { ApiError } from '@/lib/api/client'
+import { createGroup } from '@/lib/api/groups'
+import { useApp } from '@/lib/context'
 
 export default function CreateGroupPage() {
   const router = useRouter()
+  const { refreshGroups, setCurrentGroup } = useApp()
   const [name, setName] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 
-  const handleCreate = (event?: React.FormEvent) => {
+  const handleCreate = async (event?: React.FormEvent) => {
     event?.preventDefault()
     if (!name.trim()) {
       toast.error('Digite um nome para o grupo')
       return
     }
     setIsCreating(true)
-    // Simulate API call
-    setTimeout(() => {
+    try {
+      const group = await createGroup(name.trim())
+      if (group) setCurrentGroup(group)
+      await refreshGroups()
       toast.success('Grupo criado!', {
         description: `O grupo "${name}" foi criado com sucesso`,
       })
       router.push('/groups')
-    }, 500)
+    } catch (error) {
+      toast.error('Não foi possível criar o grupo', {
+        description: error instanceof ApiError ? error.message : 'Tente novamente em instantes',
+      })
+    } finally {
+      setIsCreating(false)
+    }
   }
 
   return (

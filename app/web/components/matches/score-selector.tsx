@@ -6,8 +6,8 @@ import { cn } from '@/lib/utils'
 import { Minus, Plus, Lock } from 'lucide-react'
 
 interface ScoreSelectorProps {
-  homeTeam: { name: string; flag: string; code: string }
-  awayTeam: { name: string; flag: string; code: string }
+  homeTeam: { name: string; flag: string | null; code: string }
+  awayTeam: { name: string; flag: string | null; code: string }
   initialHomeScore?: number
   initialAwayScore?: number
   onSubmit: (homeScore: number, awayScore: number) => void
