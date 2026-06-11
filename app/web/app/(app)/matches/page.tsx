@@ -34,18 +34,24 @@ export default function MatchesPage() {
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [matches, setMatches] = useState<Match[]>([])
   const [userPredictions, setUserPredictions] = useState<Prediction[]>([])
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
 
     async function loadMatches() {
-      const [nextMatches, nextPredictions] = await Promise.all([
-        listMatches(),
-        currentUser ? listPredictionsForUser(currentUser.id) : Promise.resolve([]),
-      ])
-      if (cancelled) return
-      setMatches(nextMatches)
-      setUserPredictions(nextPredictions)
+      setLoadError(null)
+      try {
+        const [nextMatches, nextPredictions] = await Promise.all([
+          listMatches(),
+          currentUser ? listPredictionsForUser(currentUser.id) : Promise.resolve([]),
+        ])
+        if (cancelled) return
+        setMatches(nextMatches)
+        setUserPredictions(nextPredictions)
+      } catch {
+        if (!cancelled) setLoadError('Não foi possível carregar os jogos. Tente novamente.')
+      }
     }
 
     loadMatches()
@@ -134,8 +140,15 @@ export default function MatchesPage() {
         ))}
       </div>
 
+      {/* Error state */}
+      {loadError && (
+        <Card className="p-6 text-center mb-4 border-destructive/50 bg-destructive/5">
+          <p className="font-medium text-destructive">{loadError}</p>
+        </Card>
+      )}
+
       {/* Matches List */}
-      {filteredMatches.length === 0 ? (
+      {!loadError && (filteredMatches.length === 0 ? (
         <Card className="p-8 text-center">
           <div className="text-4xl mb-3">🔍</div>
           <p className="font-medium">Nenhum jogo encontrado</p>
@@ -163,7 +176,7 @@ export default function MatchesPage() {
             )
           })}
         </div>
-      )}
+      ))}
     </div>
   )
 }
