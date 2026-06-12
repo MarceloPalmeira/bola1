@@ -93,21 +93,46 @@ _STAGE_MAP: dict[str, MatchPhase] = {
 }
 
 _FLAG_MAP: dict[str, str] = {
-    "MEX": "🇲🇽", "CAN": "🇨🇦", "USA": "🇺🇸",
-    "BRA": "🇧🇷", "ARG": "🇦🇷", "URU": "🇺🇾",
-    "FRA": "🇫🇷", "GER": "🇩🇪", "ESP": "🇪🇸",
-    "ENG": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "POR": "🇵🇹", "NED": "🇳🇱",
-    "ITA": "🇮🇹", "BEL": "🇧🇪", "JPN": "🇯🇵",
-    "KOR": "🇰🇷", "MAR": "🇲🇦", "SEN": "🇸🇳",
-    "AUS": "🇦🇺", "CRO": "🇭🇷", "SUI": "🇨🇭",
-    "SRB": "🇷🇸", "POL": "🇵🇱", "DEN": "🇩🇰",
-    "ECU": "🇪🇨", "QAT": "🇶🇦", "GHA": "🇬🇭",
-    "CMR": "🇨🇲", "TUN": "🇹🇳", "CRC": "🇨🇷",
-    "PAN": "🇵🇦", "HON": "🇭🇳", "JAM": "🇯🇲",
-    "CHI": "🇨🇱", "COL": "🇨🇴", "PAR": "🇵🇾",
-    "PER": "🇵🇪", "VEN": "🇻🇪", "BOL": "🇧🇴",
-    "NGA": "🇳🇬", "EGY": "🇪🇬", "CIV": "🇨🇮",
-    "SAU": "🇸🇦", "IRN": "🇮🇷", "AUS": "🇦🇺",
+    # Americas
+    "ARG": "🇦🇷", "BOL": "🇧🇴", "BRA": "🇧🇷", "CAN": "🇨🇦",
+    "CHI": "🇨🇱", "COL": "🇨🇴", "CRC": "🇨🇷", "ECU": "🇪🇨",
+    "GUA": "🇬🇹", "GUY": "🇬🇾", "HAI": "🇭🇹", "HON": "🇭🇳",
+    "JAM": "🇯🇲", "MEX": "🇲🇽", "PAN": "🇵🇦", "PAR": "🇵🇾",
+    "PER": "🇵🇪", "TRI": "🇹🇹", "URY": "🇺🇾", "USA": "🇺🇸",
+    "VEN": "🇻🇪",
+    # Europe
+    "ALB": "🇦🇱", "AND": "🇦🇩", "ARM": "🇦🇲", "AUT": "🇦🇹",
+    "AZE": "🇦🇿", "BEL": "🇧🇪", "BIH": "🇧🇦", "BUL": "🇧🇬",
+    "CRO": "🇭🇷", "CUW": "🇨🇼", "CYP": "🇨🇾", "CZE": "🇨🇿",
+    "DEN": "🇩🇰", "ENG": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", "ESP": "🇪🇸", "EST": "🇪🇪",
+    "FIN": "🇫🇮", "FRA": "🇫🇷", "GEO": "🇬🇪", "GER": "🇩🇪",
+    "GRE": "🇬🇷", "HUN": "🇭🇺", "IRL": "🇮🇪", "ISL": "🇮🇸",
+    "ITA": "🇮🇹", "KAZ": "🇰🇿", "LAT": "🇱🇻", "LIE": "🇱🇮",
+    "LTU": "🇱🇹", "LUX": "🇱🇺", "MDA": "🇲🇩", "MKD": "🇲🇰",
+    "MLT": "🇲🇹", "MNE": "🇲🇪", "NED": "🇳🇱", "NIR": "🇬🇧",
+    "NOR": "🇳🇴", "POL": "🇵🇱", "POR": "🇵🇹", "ROU": "🇷🇴",
+    "RSM": "🇸🇲", "RUS": "🇷🇺", "SCO": "🏴󠁧󠁢󠁳󠁣󠁴󠁿", "SRB": "🇷🇸",
+    "SUI": "🇨🇭", "SVK": "🇸🇰", "SVN": "🇸🇮", "SWE": "🇸🇪",
+    "TUR": "🇹🇷", "UKR": "🇺🇦", "WAL": "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
+    # Africa
+    "ALG": "🇩🇿", "ANG": "🇦🇴", "BEN": "🇧🇯", "BFA": "🇧🇫",
+    "BUR": "🇧🇮", "CIV": "🇨🇮", "CMR": "🇨🇲", "COD": "🇨🇩",
+    "CPV": "🇨🇻", "EGY": "🇪🇬", "ETH": "🇪🇹", "GAB": "🇬🇦",
+    "GHA": "🇬🇭", "GUI": "🇬🇳", "KEN": "🇰🇪", "LBA": "🇱🇾",
+    "MAD": "🇲🇬", "MAR": "🇲🇦", "MLI": "🇲🇱", "MOZ": "🇲🇿",
+    "MRI": "🇲🇺", "MTN": "🇲🇷", "NGA": "🇳🇬", "RSA": "🇿🇦",
+    "RWA": "🇷🇼", "SEN": "🇸🇳", "SLE": "🇸🇱", "SOM": "🇸🇴",
+    "TAN": "🇹🇿", "TOG": "🇹🇬", "TUN": "🇹🇳", "UGA": "🇺🇬",
+    "ZAM": "🇿🇲", "ZIM": "🇿🇼",
+    # Asia / Oceania / Middle East
+    "AFG": "🇦🇫", "AUS": "🇦🇺", "BHR": "🇧🇭", "BNG": "🇧🇩",
+    "CHN": "🇨🇳", "FIJ": "🇫🇯", "IDN": "🇮🇩", "IND": "🇮🇳",
+    "IRN": "🇮🇷", "IRQ": "🇮🇶", "JOR": "🇯🇴", "JPN": "🇯🇵",
+    "KOR": "🇰🇷", "KSA": "🇸🇦", "KUW": "🇰🇼", "LBN": "🇱🇧",
+    "MAS": "🇲🇾", "NZL": "🇳🇿", "OMA": "🇴🇲", "PAK": "🇵🇰",
+    "PHI": "🇵🇭", "PRK": "🇰🇵", "QAT": "🇶🇦", "SGP": "🇸🇬",
+    "SYR": "🇸🇾", "THA": "🇹🇭", "TJK": "🇹🇯", "TKM": "🇹🇲",
+    "UAE": "🇦🇪", "UZB": "🇺🇿", "VIE": "🇻🇳", "YEM": "🇾🇪",
 }
 
 
@@ -153,6 +178,58 @@ def _fetch_raw_matches(competition_id: str) -> list[dict[str, Any]]:
             raise FootballApiError("Football API returned unparseable response") from exc
 
 
+_PT_NAME_MAP: dict[str, str] = {
+    "ALG": "Argélia",
+    "ARG": "Argentina",
+    "AUS": "Austrália",
+    "AUT": "Áustria",
+    "BEL": "Bélgica",
+    "BIH": "Bósnia e Herzegovina",
+    "BRA": "Brasil",
+    "CAN": "Canadá",
+    "CIV": "Costa do Marfim",
+    "COD": "RD Congo",
+    "COL": "Colômbia",
+    "CPV": "Cabo Verde",
+    "CRO": "Croácia",
+    "CUW": "Curaçao",
+    "CZE": "República Tcheca",
+    "ECU": "Equador",
+    "EGY": "Egito",
+    "ENG": "Inglaterra",
+    "ESP": "Espanha",
+    "FRA": "França",
+    "GER": "Alemanha",
+    "GHA": "Gana",
+    "HAI": "Haiti",
+    "IRN": "Irã",
+    "IRQ": "Iraque",
+    "JOR": "Jordânia",
+    "JPN": "Japão",
+    "KOR": "Coreia do Sul",
+    "KSA": "Arábia Saudita",
+    "MAR": "Marrocos",
+    "MEX": "México",
+    "NED": "Holanda",
+    "NOR": "Noruega",
+    "NZL": "Nova Zelândia",
+    "PAN": "Panamá",
+    "PAR": "Paraguai",
+    "POR": "Portugal",
+    "QAT": "Catar",
+    "RSA": "África do Sul",
+    "SCO": "Escócia",
+    "SEN": "Senegal",
+    "SUI": "Suíça",
+    "SWE": "Suécia",
+    "TUN": "Tunísia",
+    "TUR": "Turquia",
+    "URY": "Uruguai",
+    "USA": "EUA",
+    "UZB": "Uzbequistão",
+}
+
+
 def _map_phase(stage: str | None) -> MatchPhase:
     return _STAGE_MAP.get(stage or "", MatchPhase.group_stage)
 
@@ -165,21 +242,27 @@ def _upsert_team(db: Session, raw_team: dict[str, Any]) -> Team | None:
     if not raw_team:
         return None
 
-    name: str = raw_team.get("name") or raw_team.get("shortName") or ""
     tla: str = (raw_team.get("tla") or "").upper()
-    if not tla or not name:
+    api_name: str = raw_team.get("name") or raw_team.get("shortName") or ""
+    if not tla or not api_name:
         return None
+
+    pt_name = _PT_NAME_MAP.get(tla, api_name)
 
     team = db.scalar(select(Team).where(Team.code == tla))
     if team is None:
         team = Team(
             id=new_id(),
-            name=name,
+            name=pt_name,
             code=tla,
             flag=_FLAG_MAP.get(tla),
         )
         db.add(team)
         db.flush()
+    else:
+        team.name = pt_name
+        if team.flag is None:
+            team.flag = _FLAG_MAP.get(tla)
     return team
 
 
