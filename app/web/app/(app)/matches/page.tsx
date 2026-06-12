@@ -70,6 +70,20 @@ export default function MatchesPage() {
   const upcomingCount = matches.filter(m => m.status === 'upcoming').length
   const liveCount = matches.filter(m => m.status === 'live').length
 
+  // Auto-refresh every 60s while there are live matches
+  useEffect(() => {
+    if (liveCount === 0) return
+    const id = setInterval(async () => {
+      try {
+        const next = await listMatches()
+        setMatches(next)
+      } catch {
+        // ignore polling errors — stale data is acceptable
+      }
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [liveCount])
+
   return (
     <div className="px-4 py-6 max-w-4xl mx-auto">
       {/* Header */}
