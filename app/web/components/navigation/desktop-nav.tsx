@@ -66,11 +66,13 @@ export function DesktopNav() {
               <Sun className="h-5 w-5" />
             )}
           </Button>
-          <Link href="/admin">
-            <Button variant="ghost" size="icon" className="rounded-full" aria-label="Abrir painel admin">
-              <Settings className="h-5 w-5" />
-            </Button>
-          </Link>
+          {currentUser?.isSuperuser && (
+            <Link href="/admin">
+              <Button variant="ghost" size="icon" className="rounded-full" aria-label="Abrir painel admin">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
+          )}
           {currentUser && (
             <Link href="/profile" className="flex items-center gap-2 pl-3 border-l border-border">
               <span className="text-2xl">{currentUser.avatar}</span>
