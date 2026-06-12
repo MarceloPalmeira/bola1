@@ -66,6 +66,20 @@ export default function DashboardPage() {
 
   const upcomingMatches = matches.filter((match) => match.status === 'upcoming').slice(0, 3)
   const liveMatches = matches.filter((match) => match.status === 'live')
+
+  // Auto-refresh every 60s while there are live matches
+  useEffect(() => {
+    if (liveMatches.length === 0) return
+    const id = setInterval(async () => {
+      try {
+        const next = await listMatches()
+        setMatches(next)
+      } catch {
+        // ignore polling errors
+      }
+    }, 60_000)
+    return () => clearInterval(id)
+  }, [liveMatches.length])
   const currentUserRanking = ranking.find(r => r.user.id === currentUser?.id)
   const currentMember = currentGroup?.members.find(m => m.userId === currentUser?.id)
   const predictionFor = (matchId: string) =>
