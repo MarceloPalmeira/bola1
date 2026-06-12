@@ -53,3 +53,22 @@ export const registerMatchResult = async (matchId: string, homeScore: number, aw
     body: { homeScore, awayScore },
   })
 }
+
+export const syncMatchesFromApi = async (competitionId = '2000') => {
+  if (!isRestApiConfigured()) {
+    warnMockFallback('syncMatchesFromApi')
+    return { status: 'ok', synced: 0, skipped: 0 }
+  }
+  return apiFetch<{ status: string; synced: number; skipped: number }>(
+    `/admin/matches/sync?competition_id=${competitionId}`,
+    { method: 'POST' },
+  )
+}
+
+export const recalculateAllRankings = async () => {
+  if (!isRestApiConfigured()) {
+    warnMockFallback('recalculateAllRankings')
+    return { status: 'ok' }
+  }
+  return apiFetch<{ status: string }>('/admin/rankings/recalculate', { method: 'POST' })
+}
