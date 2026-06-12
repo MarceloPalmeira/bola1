@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useApp } from '@/lib/context'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -16,7 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { listGroups } from '@/lib/api/groups'
-import { listMatches, phaseLabels, registerMatchResult } from '@/lib/api/matches'
+import { listMatches, phaseLabels, recalculateAllRankings, registerMatchResult, syncMatchesFromApi } from '@/lib/api/matches'
 import { listUsers } from '@/lib/api/users'
 import { ApiError } from '@/lib/api/client'
 import { Group, Match, User } from '@/lib/types'
@@ -40,6 +41,14 @@ import { cn } from '@/lib/utils'
 
 export default function AdminPage() {
   const router = useRouter()
+  const { currentUser } = useApp()
+
+  useEffect(() => {
+    if (currentUser && !currentUser.isSuperuser) {
+      router.replace('/dashboard')
+    }
+  }, [currentUser, router])
+
   const [selectedMatch, setSelectedMatch] = useState<string | null>(null)
   const [homeScore, setHomeScore] = useState('')
   const [awayScore, setAwayScore] = useState('')
@@ -47,6 +56,8 @@ export default function AdminPage() {
   const [groups, setGroups] = useState<Group[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [isRegisteringResult, setIsRegisteringResult] = useState(false)
+  const [isSyncing, setIsSyncing] = useState(false)
+  const [isRecalculating, setIsRecalculating] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -70,16 +81,38 @@ export default function AdminPage() {
     }
   }, [])
 
-  const handleSyncMatches = () => {
-    toast.success('Sincronização iniciada', {
-      description: 'Os jogos serão atualizados em breve',
-    })
+  const handleSyncMatches = async () => {
+    setIsSyncing(true)
+    try {
+      const result = await syncMatchesFromApi()
+      const nextMatches = await listMatches()
+      setMatches(nextMatches)
+      toast.success('Sincronização concluída', {
+        description: `${result.synced} partidas atualizadas, ${result.skipped} ignoradas.`,
+      })
+    } catch (error) {
+      toast.error('Falha na sincronização', {
+        description: error instanceof ApiError ? error.message : 'Verifique as credenciais da API externa.',
+      })
+    } finally {
+      setIsSyncing(false)
+    }
   }
 
-  const handleRecalculatePoints = () => {
-    toast.success('Recálculo iniciado', {
-      description: 'Os pontos serão recalculados em breve',
-    })
+  const handleRecalculatePoints = async () => {
+    setIsRecalculating(true)
+    try {
+      await recalculateAllRankings()
+      toast.success('Pontuação recalculada', {
+        description: 'Todos os palpites foram reavaliados.',
+      })
+    } catch (error) {
+      toast.error('Falha no recálculo', {
+        description: error instanceof ApiError ? error.message : 'Tente novamente.',
+      })
+    } finally {
+      setIsRecalculating(false)
+    }
   }
 
   const handleRegisterResult = async () => {
@@ -172,13 +205,13 @@ export default function AdminPage() {
                 <div>
                   <p className="font-medium">Sincronizar jogos</p>
                   <p className="text-xs text-muted-foreground">
-                    Buscar jogos de API externa (placeholder)
+                    Buscar partidas e placares da API externa
                   </p>
                 </div>
               </div>
-              <Button variant="outline" onClick={handleSyncMatches}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Sincronizar
+              <Button variant="outline" onClick={handleSyncMatches} disabled={isSyncing}>
+                <RefreshCw className={cn('h-4 w-4 mr-2', isSyncing && 'animate-spin')} />
+                {isSyncing ? 'Sincronizando...' : 'Sincronizar'}
               </Button>
             </div>
           </Card>
@@ -358,8 +391,9 @@ export default function AdminPage() {
                   </p>
                 </div>
               </div>
-              <Button variant="outline" onClick={handleRecalculatePoints}>
-                Recalcular
+              <Button variant="outline" onClick={handleRecalculatePoints} disabled={isRecalculating}>
+                <RefreshCw className={cn('h-4 w-4 mr-2', isRecalculating && 'animate-spin')} />
+                {isRecalculating ? 'Recalculando...' : 'Recalcular'}
               </Button>
             </div>
           </Card>
