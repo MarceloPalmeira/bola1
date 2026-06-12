@@ -1,4 +1,7 @@
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
+
+_BRT = ZoneInfo("America/Sao_Paulo")
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -30,14 +33,15 @@ def public_match_status(match: Match) -> str:
 
 
 def to_match_read(match: Match) -> MatchRead:
-    kickoff_at = normalize_dt(match.kickoff_at)
+    kickoff_utc = normalize_dt(match.kickoff_at)
+    kickoff_brt = kickoff_utc.astimezone(_BRT)
     return MatchRead(
         id=match.id,
         home_team=match.home_team,
         away_team=match.away_team,
         kickoff_at=match.kickoff_at,
-        date=kickoff_at.date().isoformat(),
-        time=kickoff_at.strftime("%H:%M"),
+        date=kickoff_brt.date().isoformat(),
+        time=kickoff_brt.strftime("%H:%M"),
         venue=match.venue,
         phase=match.phase,
         world_cup_group=match.world_cup_group,
