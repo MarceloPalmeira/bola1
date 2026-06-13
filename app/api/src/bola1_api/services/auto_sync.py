@@ -26,21 +26,25 @@ from bola1_api.services.football_api import (
     FootballApiNotConfigured,
     sync_matches,
 )
+from bola1_api.services.scoring import recalculate_match_points
 
 logger = logging.getLogger(__name__)
 
 _POLL_INTERVAL_SECONDS = 60
 _WINDOW_BEFORE_KICKOFF = timedelta(minutes=90)
+_WINDOW_AFTER_KICKOFF = timedelta(hours=3)
 
 
 def _should_sync() -> bool:
     with SessionLocal() as db:
         now = datetime.now(UTC)
+
         live = db.scalar(
             select(Match).where(Match.status == MatchStatus.live.value).limit(1)
         )
         if live:
             return True
+
         imminent = db.scalar(
             select(Match).where(
                 Match.status == MatchStatus.upcoming.value,
@@ -48,13 +52,26 @@ def _should_sync() -> bool:
                 Match.kickoff_at <= now + _WINDOW_BEFORE_KICKOFF,
             ).limit(1)
         )
-        return imminent is not None
+        if imminent:
+            return True
+
+        # Partida que já deveria ter começado mas o DB ainda não atualizou para live/finished
+        in_progress_window = db.scalar(
+            select(Match).where(
+                Match.status != MatchStatus.finished.value,
+                Match.kickoff_at >= now - _WINDOW_AFTER_KICKOFF,
+                Match.kickoff_at < now,
+            ).limit(1)
+        )
+        return in_progress_window is not None
 
 
 def _sync_now() -> dict[str, int] | None:
     with SessionLocal() as db:
         try:
             result = sync_matches(db)
+            for match in db.query(Match).filter_by(status=MatchStatus.finished.value):
+                recalculate_match_points(db, match=match)
             db.commit()
             return result
         except FootballApiCooldown:

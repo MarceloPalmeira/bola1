@@ -60,6 +60,8 @@ def sync_matches_from_api(
     require_superuser(current_user)
     try:
         result = sync_matches(db, competition_id=competition_id)
+        for match in db.query(Match).filter_by(status=MatchStatus.finished.value):
+            recalculate_match_points(db, match=match)
         db.commit()
         return {"status": "ok", **result}
     except FootballApiNotConfigured as exc:
