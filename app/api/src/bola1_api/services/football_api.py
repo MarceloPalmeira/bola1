@@ -178,6 +178,11 @@ def _fetch_raw_matches(competition_id: str) -> list[dict[str, Any]]:
             raise FootballApiError("Football API returned unparseable response") from exc
 
 
+# TLAs que a API retorna de forma inconsistente — normaliza para o código canônico
+_TLA_ALIAS: dict[str, str] = {
+    "CUR": "CUW",  # Curaçao: API às vezes usa CUR, às vezes CUW
+}
+
 _PT_NAME_MAP: dict[str, str] = {
     "ALG": "Argélia",
     "ARG": "Argentina",
@@ -243,6 +248,7 @@ def _upsert_team(db: Session, raw_team: dict[str, Any]) -> Team | None:
         return None
 
     tla: str = (raw_team.get("tla") or "").upper()
+    tla = _TLA_ALIAS.get(tla, tla)
     api_name: str = raw_team.get("name") or raw_team.get("shortName") or ""
     if not tla or not api_name:
         return None
