@@ -55,27 +55,27 @@ export function ScoreSelector({
   return (
     <div className="space-y-6">
       {/* Score Selectors */}
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex items-center justify-between gap-1 sm:gap-4">
         {/* Home Team */}
-        <div className="flex-1 flex flex-col items-center gap-3">
-          <span className="text-5xl">{homeTeam.flag}</span>
-          <div className="text-center">
-            <p className="font-bold text-lg">{homeTeam.name}</p>
-            <p className="text-xs text-muted-foreground uppercase">{homeTeam.code}</p>
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 sm:gap-3">
+          <span className="text-3xl sm:text-5xl">{homeTeam.flag}</span>
+          <div className="text-center w-full min-w-0 px-1">
+            <p className="font-bold text-sm sm:text-lg truncate">{homeTeam.name}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase">{homeTeam.code}</p>
           </div>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-1 sm:gap-2 mt-2">
             <Button
               variant="outline"
               size="icon"
-              className="h-12 w-12 rounded-xl text-lg"
+              className="h-7 w-7 sm:h-12 sm:w-12 rounded-xl text-lg shrink-0"
               onClick={() => decrement('home')}
               disabled={isLocked || homeScore === 0}
               aria-label={`Diminuir gols de ${homeTeam.name}`}
             >
-              <Minus className="h-5 w-5" />
+              <Minus className="h-3 w-3 sm:h-5 sm:w-5" />
             </Button>
             <div className={cn(
-              'w-20 h-16 flex items-center justify-center rounded-2xl text-4xl font-bold',
+              'w-9 h-11 sm:w-20 sm:h-16 flex items-center justify-center rounded-2xl text-lg sm:text-4xl font-bold shrink-0',
               'bg-primary/10 text-primary border-2 border-primary/20'
             )}>
               {homeScore}
@@ -83,41 +83,41 @@ export function ScoreSelector({
             <Button
               variant="outline"
               size="icon"
-              className="h-12 w-12 rounded-xl text-lg"
+              className="h-7 w-7 sm:h-12 sm:w-12 rounded-xl text-lg shrink-0"
               onClick={() => increment('home')}
               disabled={isLocked || homeScore === 15}
               aria-label={`Aumentar gols de ${homeTeam.name}`}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-3 w-3 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </div>
 
         {/* VS Divider */}
-        <div className="flex flex-col items-center gap-2">
-          <span className="text-2xl font-bold text-muted-foreground">X</span>
+        <div className="flex flex-col items-center gap-2 shrink-0 px-1">
+          <span className="text-lg sm:text-2xl font-bold text-muted-foreground">X</span>
         </div>
 
         {/* Away Team */}
-        <div className="flex-1 flex flex-col items-center gap-3">
-          <span className="text-5xl">{awayTeam.flag}</span>
-          <div className="text-center">
-            <p className="font-bold text-lg">{awayTeam.name}</p>
-            <p className="text-xs text-muted-foreground uppercase">{awayTeam.code}</p>
+        <div className="flex-1 min-w-0 flex flex-col items-center gap-2 sm:gap-3">
+          <span className="text-3xl sm:text-5xl">{awayTeam.flag}</span>
+          <div className="text-center w-full min-w-0 px-1">
+            <p className="font-bold text-sm sm:text-lg truncate">{awayTeam.name}</p>
+            <p className="text-[10px] sm:text-xs text-muted-foreground uppercase">{awayTeam.code}</p>
           </div>
-          <div className="flex items-center gap-2 mt-2">
+          <div className="flex items-center gap-1 sm:gap-2 mt-2">
             <Button
               variant="outline"
               size="icon"
-              className="h-12 w-12 rounded-xl text-lg"
+              className="h-7 w-7 sm:h-12 sm:w-12 rounded-xl text-lg shrink-0"
               onClick={() => decrement('away')}
               disabled={isLocked || awayScore === 0}
               aria-label={`Diminuir gols de ${awayTeam.name}`}
             >
-              <Minus className="h-5 w-5" />
+              <Minus className="h-3 w-3 sm:h-5 sm:w-5" />
             </Button>
             <div className={cn(
-              'w-20 h-16 flex items-center justify-center rounded-2xl text-4xl font-bold',
+              'w-9 h-11 sm:w-20 sm:h-16 flex items-center justify-center rounded-2xl text-lg sm:text-4xl font-bold shrink-0',
               'bg-primary/10 text-primary border-2 border-primary/20'
             )}>
               {awayScore}
@@ -125,12 +125,12 @@ export function ScoreSelector({
             <Button
               variant="outline"
               size="icon"
-              className="h-12 w-12 rounded-xl text-lg"
+              className="h-7 w-7 sm:h-12 sm:w-12 rounded-xl text-lg shrink-0"
               onClick={() => increment('away')}
               disabled={isLocked || awayScore === 15}
               aria-label={`Aumentar gols de ${awayTeam.name}`}
             >
-              <Plus className="h-5 w-5" />
+              <Plus className="h-3 w-3 sm:h-5 sm:w-5" />
             </Button>
           </div>
         </div>
