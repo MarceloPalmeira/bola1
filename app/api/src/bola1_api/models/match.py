@@ -22,6 +22,10 @@ class Match(IdMixin, TimestampMixin, Base):
 
     home_team_id: Mapped[str] = mapped_column(ForeignKey("teams.id"), nullable=False)
     away_team_id: Mapped[str] = mapped_column(ForeignKey("teams.id"), nullable=False)
+    # Raw match id from the external football data provider. Stable across
+    # reschedules, unlike (teams, kickoff_at) — used as the primary upsert key
+    # during sync to avoid duplicating fixtures whose kickoff time shifts.
+    external_id: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
     kickoff_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True, nullable=False)
     venue: Mapped[str] = mapped_column(String(255), nullable=False)
     phase: Mapped[str] = mapped_column(

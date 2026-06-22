@@ -13,7 +13,7 @@ Admin-only endpoint: POST /api/v1/admin/matches/sync
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
@@ -181,6 +181,7 @@ def _fetch_raw_matches(competition_id: str) -> list[dict[str, Any]]:
 # TLAs que a API retorna de forma inconsistente — normaliza para o código canônico
 _TLA_ALIAS: dict[str, str] = {
     "CUR": "CUW",  # Curaçao: API às vezes usa CUR, às vezes CUW
+    "URU": "URY",  # Uruguai: API às vezes usa URU (FIFA), às vezes URY (ISO-3166)
 }
 
 _PT_NAME_MAP: dict[str, str] = {
@@ -286,6 +287,30 @@ def _parse_kickoff(utc_date: str | None) -> datetime | None:
 # Public sync function
 # ---------------------------------------------------------------------------
 
+# Window used only to re-attach legacy rows synced before external_id existed
+# (or duplicates from before the cleanup script ran) to the provider's raw id,
+# instead of creating a new row when the provider reschedules kickoff_at.
+_LEGACY_MATCH_LOOKUP_WINDOW = timedelta(hours=24)
+
+
+def _find_existing_match(
+    db: Session, *, external_id: str | None, home_team_id: str, away_team_id: str, kickoff: datetime
+) -> Match | None:
+    if external_id is not None:
+        match = db.scalar(select(Match).where(Match.external_id == external_id))
+        if match is not None:
+            return match
+
+    return db.scalar(
+        select(Match).where(
+            Match.home_team_id == home_team_id,
+            Match.away_team_id == away_team_id,
+            Match.external_id.is_(None),
+            Match.kickoff_at >= kickoff - _LEGACY_MATCH_LOOKUP_WINDOW,
+            Match.kickoff_at <= kickoff + _LEGACY_MATCH_LOOKUP_WINDOW,
+        )
+    )
+
 
 def sync_matches(db: Session, competition_id: str = "2000") -> dict[str, int]:
     """Pull matches from the external API and upsert them into the database.
@@ -317,6 +342,9 @@ def sync_matches(db: Session, competition_id: str = "2000") -> dict[str, int]:
             phase = _map_phase(raw.get("stage"))
             ext_status = _map_status(raw.get("status"))
 
+            # fullTime holds the definitive score for both regular-time and
+            # extra-time/penalty matches once the provider settles it; halfTime
+            # is interim and must never be used here.
             score_full = (raw.get("score") or {}).get("fullTime") or {}
             home_score: int | None = score_full.get("home")
             away_score: int | None = score_full.get("away")
@@ -324,17 +352,21 @@ def sync_matches(db: Session, competition_id: str = "2000") -> dict[str, int]:
             group_label: str | None = raw.get("group")
             venue: str = (raw.get("venue") or "A definir")[:255]
 
-            existing: Match | None = db.scalar(
-                select(Match).where(
-                    Match.home_team_id == home_team.id,
-                    Match.away_team_id == away_team.id,
-                    Match.kickoff_at == kickoff,
-                )
+            raw_id = raw.get("id")
+            external_id: str | None = str(raw_id) if raw_id is not None else None
+
+            existing = _find_existing_match(
+                db,
+                external_id=external_id,
+                home_team_id=home_team.id,
+                away_team_id=away_team.id,
+                kickoff=kickoff,
             )
 
             if existing is None:
                 existing = Match(
                     id=new_id(),
+                    external_id=external_id,
                     home_team_id=home_team.id,
                     away_team_id=away_team.id,
                     kickoff_at=kickoff,
@@ -347,11 +379,29 @@ def sync_matches(db: Session, competition_id: str = "2000") -> dict[str, int]:
                 )
                 db.add(existing)
             else:
-                # Only overwrite mutable fields; never downgrade a finished match.
-                if existing.status != MatchStatus.finished.value:
+                # Backfill external_id onto legacy/duplicate rows so future
+                # syncs match on it directly instead of the fuzzy time window.
+                if existing.external_id is None:
+                    existing.external_id = external_id
+
+                # A finished match can still receive corrected scores from the
+                # provider (own-goal/VAR corrections), so finished->finished
+                # updates are allowed. Only a real regression — provider
+                # reporting upcoming/live for a match we already have as
+                # finished — is rejected. A finished status without a score is
+                # treated as a malformed payload and ignored, so it can't wipe
+                # a previously-stored correct score.
+                is_regression = (
+                    existing.status == MatchStatus.finished.value and ext_status != MatchStatus.finished
+                )
+                finished_without_score = ext_status == MatchStatus.finished and (
+                    home_score is None or away_score is None
+                )
+                if not is_regression and not finished_without_score:
                     existing.status = ext_status.value
                     existing.home_score = home_score
                     existing.away_score = away_score
+                existing.kickoff_at = kickoff
                 existing.venue = venue
                 existing.phase = phase.value
                 existing.world_cup_group = group_label
